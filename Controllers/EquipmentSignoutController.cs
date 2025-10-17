@@ -1,4 +1,3 @@
-
 using Asset_management.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,29 +18,50 @@ namespace AssetManagementSystem.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Create(EquipmentSignout asset)
         {
-            _context.EquipmentSignouts.Add(asset);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+            try
+            {
+                _context.EquipmentSignouts.Add(asset);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error creating asset: {ex.Message}");
+            }
         }
 
         [HttpPut("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Update(int id, EquipmentSignout asset)
         {
             if (id != asset.Id)
-                return BadRequest();
+                return BadRequest("ID mismatch.");
 
             _context.Entry(asset).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-            return NoContent();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.EquipmentSignouts.Any(a => a.Id == id))
+                    return NotFound($"Equipment signout with ID {id} not found.");
+                else
+                    throw;
+            }
         }
 
         [HttpDelete("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Delete(int id)
         {
             var asset = await _context.EquipmentSignouts.FindAsync(id);
-            if (asset == null) return NotFound();
+            if (asset == null) return NotFound($"Equipment signout with ID {id} not found.");
 
             _context.EquipmentSignouts.Remove(asset);
             await _context.SaveChangesAsync();
@@ -49,11 +69,20 @@ namespace AssetManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var asset = await _context.EquipmentSignouts.FindAsync(id);
-            if (asset == null) return NotFound();
+            if (asset == null) return NotFound($"Equipment signout with ID {id} not found.");
             return Ok(asset);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAll()
+        {
+            var assets = await _context.EquipmentSignouts.ToListAsync();
+            return Ok(assets);
         }
     }
 }

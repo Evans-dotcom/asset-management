@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Asset_management.Controllers
+namespace AssetManagementSystem.Controllers
 {
     [Authorize]
     [ApiController]
@@ -18,47 +18,37 @@ namespace Asset_management.Controllers
         }
 
         [HttpGet("{assetType}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll(string assetType)
         {
-            switch (assetType.ToLower())
+            assetType = assetType.ToLower();
+            return assetType switch
             {
-                case "standard":
-                    return Ok(await _context.StandardAssets.ToListAsync());
-                case "furniture":
-                    return Ok(await _context.FurnitureFittings.ToListAsync());
-                case "plant":
-                    return Ok(await _context.PlantMachineries.ToListAsync());
-                case "portable":
-                    return Ok(await _context.PortableItems.ToListAsync());
-                case "vehicle":
-                    return Ok(await _context.MotorVehicles.ToListAsync());
-                case "bank":
-                    return Ok(await _context.BankAccounts.ToListAsync());
-                case "land":
-                    return Ok(await _context.LandRegisters.ToListAsync());
-                case "building":
-                    return Ok(await _context.BuildingsRegisters.ToListAsync());
-                case "intangible":
-                    return Ok(await _context.IntangibleAssets.ToListAsync());
-                case "stock":
-                    return Ok(await _context.StocksRegisters.ToListAsync());
-                case "road":
-                    return Ok(await _context.RoadsInfrastructures.ToListAsync());
-                case "infrastructure":
-                    return Ok(await _context.OtherInfrastructures.ToListAsync());
-                case "bio":
-                    return Ok(await _context.BiologicalAssets.ToListAsync());
-                case "subsoil":
-                    return Ok(await _context.SubsoilAssets.ToListAsync());
-                default:
-                    return BadRequest("Invalid asset type.");
-            }
+                "standard" => Ok(await _context.StandardAssets.ToListAsync()),
+                "furniture" => Ok(await _context.FurnitureFittings.ToListAsync()),
+                "plant" => Ok(await _context.PlantMachineries.ToListAsync()),
+                "portable" => Ok(await _context.PortableItems.ToListAsync()),
+                "vehicle" => Ok(await _context.MotorVehicles.ToListAsync()),
+                "bank" => Ok(await _context.BankAccounts.ToListAsync()),
+                "land" => Ok(await _context.LandRegisters.ToListAsync()),
+                "building" => Ok(await _context.BuildingsRegisters.ToListAsync()),
+                "intangible" => Ok(await _context.IntangibleAssets.ToListAsync()),
+                "stock" => Ok(await _context.StocksRegisters.ToListAsync()),
+                "road" => Ok(await _context.RoadsInfrastructures.ToListAsync()),
+                "infrastructure" => Ok(await _context.OtherInfrastructures.ToListAsync()),
+                "bio" => Ok(await _context.BiologicalAssets.ToListAsync()),
+                "subsoil" => Ok(await _context.SubsoilAssets.ToListAsync()),
+                _ => BadRequest($"Invalid asset type: '{assetType}'.")
+            };
         }
 
-        [HttpGet("{assetType}/{id}")]
+        [HttpGet("{assetType}/{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(string assetType, int id)
         {
-            object? asset = assetType.ToLower() switch
+            assetType = assetType.ToLower();
+
+            object? asset = assetType switch
             {
                 "standard" => await _context.StandardAssets.FindAsync(id),
                 "furniture" => await _context.FurnitureFittings.FindAsync(id),
@@ -77,10 +67,9 @@ namespace Asset_management.Controllers
             };
 
             if (asset == null)
-                return NotFound();
+                return NotFound($"Asset of type '{assetType}' with ID '{id}' not found.");
 
             return Ok(asset);
         }
-
     }
 }

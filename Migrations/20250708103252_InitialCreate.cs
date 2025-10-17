@@ -56,6 +56,8 @@ namespace Asset_management.Migrations
                     FromEmployee = table.Column<string>(type: "text", nullable: false),
                     ToEmployee = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateHandedOver = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false)
@@ -76,7 +78,10 @@ namespace Asset_management.Migrations
                     ToLocation = table.Column<string>(type: "text", nullable: false),
                     DateMoved = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MovedBy = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -95,7 +100,10 @@ namespace Asset_management.Migrations
                     SystemCount = table.Column<int>(type: "integer", nullable: false),
                     ReconciledBy = table.Column<string>(type: "text", nullable: false),
                     Discrepancy = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -113,7 +121,9 @@ namespace Asset_management.Migrations
                     ToDepartment = table.Column<string>(type: "text", nullable: false),
                     DateTransferred = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ApprovedBy = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -131,7 +141,13 @@ namespace Asset_management.Migrations
                     AccountType = table.Column<string>(type: "text", nullable: false),
                     OpeningBalance = table.Column<decimal>(type: "numeric", nullable: false),
                     CurrentBalance = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    AccountName = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OfficerInCharge = table.Column<string>(type: "text", nullable: false),
+                    Signatories = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -149,7 +165,10 @@ namespace Asset_management.Migrations
                     AcquisitionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
-                    Notes = table.Column<string>(type: "text", nullable: false)
+                    Notes = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -168,7 +187,10 @@ namespace Asset_management.Migrations
                     DateConstructed = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ConstructionCost = table.Column<decimal>(type: "numeric", nullable: false),
                     Depreciation = table.Column<decimal>(type: "numeric", nullable: false),
-                    NetBookValue = table.Column<decimal>(type: "numeric", nullable: false)
+                    NetBookValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -187,7 +209,10 @@ namespace Asset_management.Migrations
                     ExpectedReturnDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ActualReturnDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ConditionOnReturn = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -205,6 +230,7 @@ namespace Asset_management.Migrations
                     Quantity = table.Column<int>(type: "integer", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
                     PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PurchaseCost = table.Column<decimal>(type: "numeric", nullable: false),
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
@@ -226,7 +252,9 @@ namespace Asset_management.Migrations
                     DateIssued = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Purpose = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -243,7 +271,9 @@ namespace Asset_management.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     DateAcquired = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
-                    UsefulLifeYears = table.Column<int>(type: "integer", nullable: false)
+                    UsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -261,7 +291,9 @@ namespace Asset_management.Migrations
                     DateInvested = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     ExpectedReturn = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -280,7 +312,9 @@ namespace Asset_management.Migrations
                     TitleDeedNumber = table.Column<string>(type: "text", nullable: false),
                     DateAcquired = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OwnershipStatus = table.Column<string>(type: "text", nullable: false),
-                    LandValue = table.Column<decimal>(type: "numeric", nullable: false)
+                    LandValue = table.Column<decimal>(type: "numeric", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -298,7 +332,9 @@ namespace Asset_management.Migrations
                     LeaseStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LeaseEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LeaseCost = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -316,7 +352,9 @@ namespace Asset_management.Migrations
                     Subject = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     DateFiled = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -334,7 +372,9 @@ namespace Asset_management.Migrations
                     Cause = table.Column<string>(type: "text", nullable: false),
                     ReportedBy = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -352,7 +392,9 @@ namespace Asset_management.Migrations
                     DateStarted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     DateCompleted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Cost = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -374,7 +416,9 @@ namespace Asset_management.Migrations
                     PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
-                    ResponsibleOfficer = table.Column<string>(type: "text", nullable: false)
+                    ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -392,7 +436,9 @@ namespace Asset_management.Migrations
                     Description = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     AcquisitionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -407,7 +453,9 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Description = table.Column<string>(type: "text", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -426,7 +474,9 @@ namespace Asset_management.Migrations
                     PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
-                    OperationalStatus = table.Column<string>(type: "text", nullable: false)
+                    OperationalStatus = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -443,6 +493,7 @@ namespace Asset_management.Migrations
                     TagNumber = table.Column<string>(type: "text", nullable: false),
                     AssignedTo = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     DateIssued = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
@@ -464,7 +515,10 @@ namespace Asset_management.Migrations
                     LengthKm = table.Column<decimal>(type: "numeric", nullable: false),
                     ConstructionCost = table.Column<decimal>(type: "numeric", nullable: false),
                     YearConstructed = table.Column<int>(type: "integer", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -491,7 +545,10 @@ namespace Asset_management.Migrations
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     AssetCondition = table.Column<string>(type: "text", nullable: false),
-                    Notes = table.Column<string>(type: "text", nullable: false)
+                    Notes = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -511,7 +568,9 @@ namespace Asset_management.Migrations
                     TotalValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     LastRestocked = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -529,7 +588,9 @@ namespace Asset_management.Migrations
                     EstimatedVolume = table.Column<string>(type: "text", nullable: false),
                     OwnershipStatus = table.Column<string>(type: "text", nullable: false),
                     ValueEstimate = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -562,7 +623,9 @@ namespace Asset_management.Migrations
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ExpectedCompletion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CurrentValue = table.Column<decimal>(type: "numeric", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    Department = table.Column<string>(type: "text", nullable: false),
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {

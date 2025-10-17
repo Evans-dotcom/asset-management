@@ -21,24 +21,31 @@ namespace AssetManagementSystem.Controllers
             _tokenService = tokenService;
         }
 
-        // POST: api/BankAccount
+        [AllowAnonymous]
         [HttpPost]
-        [Authorize(Roles = "admin,user")] 
         public async Task<IActionResult> Create([FromBody] BankAccount asset)
         {
-            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            var userRole = User.FindFirst("role")?.Value;
+            try
+            {
+                var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                var userRole = User.FindFirst("role")?.Value;
 
-            // Optionally attach created-by info, etc.
-            _context.BankAccounts.Add(asset);
-            await _context.SaveChangesAsync();
+                _context.BankAccounts.Add(asset);
+                await _context.SaveChangesAsync();
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.InnerException.Message);
+            }
+           
 
             return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
         }
 
-        // PUT: api/BankAccount/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin,user")]
+        // [Authorize(Roles = "admin,user")]
+        [AllowAnonymous]
         public async Task<IActionResult> Update(int id, [FromBody] BankAccount asset)
         {
             if (id != asset.Id)
@@ -50,9 +57,9 @@ namespace AssetManagementSystem.Controllers
             return NoContent();
         }
 
-        // DELETE: api/BankAccount/5
         [HttpDelete("{id}")]
         [Authorize(Roles = "admin")]
+        [AllowAnonymous]
         public async Task<IActionResult> Delete(int id)
         {
             var asset = await _context.BankAccounts.FindAsync(id);
@@ -64,8 +71,8 @@ namespace AssetManagementSystem.Controllers
             return NoContent();
         }
 
-        // GET: api/BankAccount/5
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var asset = await _context.BankAccounts.FindAsync(id);
@@ -73,7 +80,7 @@ namespace AssetManagementSystem.Controllers
             return Ok(asset);
         }
 
-        // GET: api/BankAccount
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -81,8 +88,8 @@ namespace AssetManagementSystem.Controllers
             return Ok(bankAccounts);
         }
 
-        // GET: api/BankAccount/me
         [HttpGet("me")]
+        [AllowAnonymous]
         public IActionResult GetMyUserInfo()
         {
             var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;

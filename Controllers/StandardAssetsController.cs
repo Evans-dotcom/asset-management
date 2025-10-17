@@ -17,48 +17,69 @@ namespace AssetManagementSystem.Controllers
             _context = context;
         }
 
-        // GET: api/StandardAssets
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll([FromQuery] string? category, [FromQuery] string? ward)
         {
-            var query = _context.StandardAssets.AsQueryable();
+            try
+            {
+                var query = _context.StandardAssets.AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(category))
-                query = query.Where(a => a.AssetCondition == category);
+                if (!string.IsNullOrWhiteSpace(category))
+                    query = query.Where(a => a.AssetCondition == category);
 
-            if (!string.IsNullOrWhiteSpace(ward))
-                query = query.Where(a => a.Location == ward);
+                if (!string.IsNullOrWhiteSpace(ward))
+                    query = query.Where(a => a.Location == ward);
 
-            var assets = await query.ToListAsync();
-            return Ok(assets);
+                var assets = await query.ToListAsync();
+                return Ok(assets);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving assets: {ex.Message}");
+            }
         }
 
-        // GET: api/StandardAssets/5
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var asset = await _context.StandardAssets.FindAsync(id);
-            if (asset == null)
-                return NotFound();
+            try
+            {
+                var asset = await _context.StandardAssets.FindAsync(id);
+                if (asset == null)
+                    return NotFound($"Asset with ID {id} not found.");
 
-            return Ok(asset);
+                return Ok(asset);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving asset: {ex.Message}");
+            }
         }
 
-        // POST: api/StandardAssets
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> Create(StandardAsset asset)
         {
-            _context.StandardAssets.Add(asset);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+            try
+            {
+                _context.StandardAssets.Add(asset);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to create asset: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
 
-        // PUT: api/StandardAssets/5
         [HttpPut("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Update(int id, StandardAsset updatedAsset)
         {
             if (id != updatedAsset.Id)
-                return BadRequest("ID mismatch");
+                return BadRequest("ID mismatch.");
 
             _context.Entry(updatedAsset).State = EntityState.Modified;
 
@@ -70,22 +91,35 @@ namespace AssetManagementSystem.Controllers
             catch (DbUpdateConcurrencyException)
             {
                 if (!_context.StandardAssets.Any(a => a.Id == id))
-                    return NotFound();
-
-                throw;
+                    return NotFound($"Asset with ID {id} does not exist.");
+                else
+                    return Conflict("A concurrency error occurred. Please try again.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to update asset: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
-        // DELETE: api/StandardAssets/5
+
         [HttpDelete("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Delete(int id)
         {
-            var asset = await _context.StandardAssets.FindAsync(id);
-            if (asset == null)
-                return NotFound();
+            try
+            {
+                var asset = await _context.StandardAssets.FindAsync(id);
+                if (asset == null)
+                    return NotFound($"Asset with ID {id} not found.");
 
-            _context.StandardAssets.Remove(asset);
-            await _context.SaveChangesAsync();
-            return NoContent();
+                _context.StandardAssets.Remove(asset);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to delete asset: {ex.InnerException?.Message ?? ex.Message}");
+            }
         }
     }
 }

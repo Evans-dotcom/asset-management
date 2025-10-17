@@ -24,7 +24,7 @@ namespace Asset_management.models
         public DbSet<SubsoilAsset> SubsoilAssets { get; set; }
         public DbSet<MajorMaintenance> MajorMaintenances { get; set; }
         public DbSet<WorkInProgress> WorkInProgresses { get; set; }
-        public DbSet<Investment> Investments { get; set; }
+        public DbSet<Investments> Investments { get; set; }
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<AccountsReceivable> AccountsReceivables { get; set; }
         public DbSet<OtherReceivable> OtherReceivables { get; set; }

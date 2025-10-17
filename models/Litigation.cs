@@ -1,4 +1,7 @@
-﻿namespace Asset_management.models
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Asset_management.models
 {
     public class Litigation
     {
@@ -7,7 +10,10 @@
         public string PartiesInvolved { get; set; }
         public string Subject { get; set; }
         public string Status { get; set; }
-        public DateTime DateFiled { get; set; }
+        [Column(TypeName = "timestamptz")]
+        public DateTimeOffset DateFiled { get; set; } = DateTimeOffset.UtcNow;
         public string Remarks { get; set; }
+        public string Department { get; set; }
+        public string DepartmentUnit { get; set; }
     }
 }

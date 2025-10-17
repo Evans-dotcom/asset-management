@@ -9,5 +9,7 @@
         public string OwnershipStatus { get; set; }
         public decimal ValueEstimate { get; set; }
         public string Remarks { get; set; }
+        public string Department { get; set; }
+        public string DepartmentUnit { get; set; }
     }
 }
