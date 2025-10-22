@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Asset_management.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250708103252_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251022083053_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,8 +40,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -71,8 +71,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Reason")
                         .IsRequired()
@@ -102,11 +102,11 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
-                    b.Property<DateTime>("DateHandedOver")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateHandedOver")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -144,11 +144,11 @@ namespace Asset_management.Migrations
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
-                    b.Property<DateTime>("DateMoved")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateMoved")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -190,11 +190,11 @@ namespace Asset_management.Migrations
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
-                    b.Property<DateTime>("DateReconciled")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateReconciled")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -242,8 +242,8 @@ namespace Asset_management.Migrations
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("DateTransferred")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateTransferred")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -290,12 +290,21 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("BankName")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("CurrentBalance")
                         .HasColumnType("numeric");
@@ -319,9 +328,19 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Signatories")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -336,15 +355,15 @@ namespace Asset_management.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AcquisitionDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("AcquisitionDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("AssetType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -388,11 +407,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("ConstructionCost")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DateConstructed")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateConstructed")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -429,18 +445,15 @@ namespace Asset_management.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("ActualReturnDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ActualReturnDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("ConditionOnReturn")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DateIssued")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateIssued")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -453,8 +466,8 @@ namespace Asset_management.Migrations
                     b.Property<int>("EquipmentId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("ExpectedReturnDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ExpectedReturnDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("IssuedTo")
                         .IsRequired()
@@ -500,8 +513,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("PurchaseCost")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("PurchaseDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
@@ -530,8 +543,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("DateIssued")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateIssued")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -574,8 +587,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DateAcquired")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateAcquired")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -600,7 +613,7 @@ namespace Asset_management.Migrations
                     b.ToTable("IntangibleAssets");
                 });
 
-            modelBuilder.Entity("Asset_management.models.Investment", b =>
+            modelBuilder.Entity("Asset_management.models.Investments", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -611,8 +624,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("DateInvested")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateInvested")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -653,8 +666,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("Acreage")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("DateAcquired")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateAcquired")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -707,15 +720,15 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("LeaseCost")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("LeaseEnd")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("LeaseEnd")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("LeaseItem")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("LeaseStart")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("LeaseStart")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Lessor")
                         .IsRequired()
@@ -742,8 +755,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DateFiled")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateFiled")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -797,8 +810,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("LossDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("LossDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Remarks")
                         .IsRequired()
@@ -831,11 +844,11 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("Cost")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("DateCompleted")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateCompleted")
+                        .HasColumnType("timestamptz");
 
-                    b.Property<DateTime>("DateStarted")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateStarted")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -894,8 +907,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("PurchaseDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<decimal>("PurchasePrice")
                         .HasColumnType("numeric");
@@ -924,8 +937,8 @@ namespace Asset_management.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AcquisitionDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("AcquisitionDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("AssetName")
                         .IsRequired()
@@ -1023,8 +1036,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("PurchaseDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("PurchaseDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("SerialNumber")
                         .IsRequired()
@@ -1054,8 +1067,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("DateIssued")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DateIssued")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1097,8 +1110,8 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("ConstructionCost")
                         .HasColumnType("numeric");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1153,11 +1166,11 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ContractDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ContractDate")
+                        .HasColumnType("timestamptz");
 
-                    b.Property<DateTime>("DeliveryDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("DeliveryDate")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1229,8 +1242,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("LastRestocked")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("LastRestocked")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -1350,8 +1363,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("ExpectedCompletion")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("ExpectedCompletion")
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("ProjectName")
                         .IsRequired()
@@ -1361,8 +1374,8 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("timestamptz");
 
                     b.HasKey("Id");
 

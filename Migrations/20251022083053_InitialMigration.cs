@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Asset_management.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,7 +20,7 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CreditorName = table.Column<string>(type: "text", nullable: false),
                     AmountDue = table.Column<decimal>(type: "numeric", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DueDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false)
                 },
@@ -37,7 +37,7 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DebtorName = table.Column<string>(type: "text", nullable: false),
                     AmountDue = table.Column<decimal>(type: "numeric", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DueDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false)
                 },
@@ -57,8 +57,8 @@ namespace Asset_management.Migrations
                     ToEmployee = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateHandedOver = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    DateHandedOver = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false)
                 },
@@ -76,12 +76,12 @@ namespace Asset_management.Migrations
                     AssetId = table.Column<int>(type: "integer", nullable: false),
                     FromLocation = table.Column<string>(type: "text", nullable: false),
                     ToLocation = table.Column<string>(type: "text", nullable: false),
-                    DateMoved = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateMoved = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     MovedBy = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -95,7 +95,7 @@ namespace Asset_management.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetId = table.Column<int>(type: "integer", nullable: false),
-                    DateReconciled = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateReconciled = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     PhysicalCount = table.Column<int>(type: "integer", nullable: false),
                     SystemCount = table.Column<int>(type: "integer", nullable: false),
                     ReconciledBy = table.Column<string>(type: "text", nullable: false),
@@ -103,7 +103,7 @@ namespace Asset_management.Migrations
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -119,7 +119,7 @@ namespace Asset_management.Migrations
                     AssetId = table.Column<int>(type: "integer", nullable: false),
                     FromDepartment = table.Column<string>(type: "text", nullable: false),
                     ToDepartment = table.Column<string>(type: "text", nullable: false),
-                    DateTransferred = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateTransferred = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     ApprovedBy = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
@@ -145,9 +145,15 @@ namespace Asset_management.Migrations
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
                     AccountName = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     OfficerInCharge = table.Column<string>(type: "text", nullable: false),
-                    Signatories = table.Column<string>(type: "text", nullable: false)
+                    Signatories = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -162,13 +168,13 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetType = table.Column<string>(type: "text", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    AcquisitionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AcquisitionDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -184,13 +190,12 @@ namespace Asset_management.Migrations
                     BuildingName = table.Column<string>(type: "text", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     UsePurpose = table.Column<string>(type: "text", nullable: false),
-                    DateConstructed = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateConstructed = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     ConstructionCost = table.Column<decimal>(type: "numeric", nullable: false),
                     Depreciation = table.Column<decimal>(type: "numeric", nullable: false),
                     NetBookValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -205,14 +210,13 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EquipmentId = table.Column<int>(type: "integer", nullable: false),
                     IssuedTo = table.Column<string>(type: "text", nullable: false),
-                    DateIssued = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpectedReturnDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ActualReturnDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    DateIssued = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ExpectedReturnDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ActualReturnDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     ConditionOnReturn = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -231,7 +235,7 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PurchaseDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     PurchaseCost = table.Column<decimal>(type: "numeric", nullable: false),
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false)
@@ -249,7 +253,7 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Officer = table.Column<string>(type: "text", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    DateIssued = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateIssued = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Purpose = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
@@ -269,7 +273,7 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetType = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
-                    DateAcquired = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateAcquired = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     UsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
@@ -288,7 +292,7 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     InvestmentType = table.Column<string>(type: "text", nullable: false),
                     Institution = table.Column<string>(type: "text", nullable: false),
-                    DateInvested = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateInvested = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     ExpectedReturn = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
@@ -310,7 +314,7 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     Acreage = table.Column<decimal>(type: "numeric", nullable: false),
                     TitleDeedNumber = table.Column<string>(type: "text", nullable: false),
-                    DateAcquired = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateAcquired = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     OwnershipStatus = table.Column<string>(type: "text", nullable: false),
                     LandValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
@@ -329,8 +333,8 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     LeaseItem = table.Column<string>(type: "text", nullable: false),
                     Lessor = table.Column<string>(type: "text", nullable: false),
-                    LeaseStart = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    LeaseEnd = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LeaseStart = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    LeaseEnd = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     LeaseCost = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
@@ -351,7 +355,7 @@ namespace Asset_management.Migrations
                     PartiesInvolved = table.Column<string>(type: "text", nullable: false),
                     Subject = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
-                    DateFiled = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateFiled = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false)
@@ -368,7 +372,7 @@ namespace Asset_management.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetId = table.Column<int>(type: "integer", nullable: false),
-                    LossDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LossDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Cause = table.Column<string>(type: "text", nullable: false),
                     ReportedBy = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
@@ -389,8 +393,8 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetId = table.Column<int>(type: "integer", nullable: false),
                     MaintenanceType = table.Column<string>(type: "text", nullable: false),
-                    DateStarted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    DateCompleted = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateStarted = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    DateCompleted = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Cost = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
@@ -413,7 +417,7 @@ namespace Asset_management.Migrations
                     YearOfManufacture = table.Column<int>(type: "integer", nullable: false),
                     EngineNumber = table.Column<string>(type: "text", nullable: false),
                     ChassisNumber = table.Column<string>(type: "text", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PurchaseDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     PurchasePrice = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
@@ -435,7 +439,7 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
-                    AcquisitionDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AcquisitionDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false)
@@ -471,7 +475,7 @@ namespace Asset_management.Migrations
                     EquipmentName = table.Column<string>(type: "text", nullable: false),
                     SerialNumber = table.Column<string>(type: "text", nullable: false),
                     MakeModel = table.Column<string>(type: "text", nullable: false),
-                    PurchaseDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    PurchaseDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
                     OperationalStatus = table.Column<string>(type: "text", nullable: false),
@@ -495,7 +499,7 @@ namespace Asset_management.Migrations
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
-                    DateIssued = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DateIssued = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false)
                 },
@@ -518,7 +522,7 @@ namespace Asset_management.Migrations
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -535,7 +539,8 @@ namespace Asset_management.Migrations
                     SerialNumber = table.Column<string>(type: "text", nullable: false),
                     MakeModel = table.Column<string>(type: "text", nullable: false),
                     TagNumber = table.Column<string>(type: "text", nullable: false),
-                    DeliveryDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    DeliveryDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     PvNumber = table.Column<string>(type: "text", nullable: false),
                     PurchaseAmount = table.Column<decimal>(type: "numeric", nullable: false),
                     DepreciationRate = table.Column<decimal>(type: "numeric", nullable: false),
@@ -547,8 +552,7 @@ namespace Asset_management.Migrations
                     AssetCondition = table.Column<string>(type: "text", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -567,7 +571,7 @@ namespace Asset_management.Migrations
                     UnitCost = table.Column<decimal>(type: "numeric", nullable: false),
                     TotalValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: false),
-                    LastRestocked = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    LastRestocked = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false)
@@ -620,8 +624,8 @@ namespace Asset_management.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ProjectName = table.Column<string>(type: "text", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpectedCompletion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    StartDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ExpectedCompletion = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     CurrentValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
