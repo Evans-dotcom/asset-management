@@ -115,11 +115,13 @@ public class BankAccountController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
     private readonly TokenService _tokenService;
+    private readonly IEmailService _emailService;
 
-    public BankAccountController(ApplicationDbContext context, TokenService tokenService)
+    public BankAccountController(ApplicationDbContext context, TokenService tokenService, IEmailService emailService)
     {
         _context = context;
         _tokenService = tokenService;
+        _emailService = emailService;
     }
 
     [HttpPost]
@@ -150,9 +152,12 @@ public class BankAccountController : ControllerBase
 
         _context.BankAccounts.Add(entity);
         await _context.SaveChangesAsync();
+
+        var assetSummary = $"{entity.BankName} - {entity.AccountNumber} - {entity.AccountType}";
+        await _emailService.NotifyAssetCreatedAsync("BankAccount", entity.Id, assetSummary, userEmail);
+
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
     }
-
     [Authorize(Roles = "admin")]
     [HttpGet("pending")]
     public async Task<IActionResult> GetPending()
@@ -217,9 +222,12 @@ public class BankAccountController : ControllerBase
 
         _context.Entry(entity).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+
+        var assetSummary = $"{entity.BankName} - {entity.AccountNumber} - {entity.AccountType}";
+        await _emailService.NotifyAssetApprovalAsync("BankAccount", entity.Id, assetSummary, entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
+
         return NoContent();
     }
-
     [Authorize(Roles = "admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

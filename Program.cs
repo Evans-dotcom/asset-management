@@ -1,11 +1,12 @@
+using System.Text;
 using Asset_management.models;
 using Asset_management.services;
+using Asset_management.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
     options.AddPolicy("UserOnly", policy => policy.RequireRole("user"));
 });
+
+// Email Services
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddSingleton<IEmailService, EmailService>();
 
 // 3. JWT Authentication configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
