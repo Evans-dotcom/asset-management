@@ -21,14 +21,13 @@ namespace Asset_management.models
         public DateTimeOffset ContractDate { get; set; } = DateTimeOffset.UtcNow;
         public string OfficerInCharge { get; set; }
         public string Signatories { get; set; }
-        // Approval workflow fields
         public BankAccountStatus Status { get; set; } = BankAccountStatus.Open;
 
         public string RequestedBy { get; set; }
         [Column(TypeName = "timestamptz")]
         public DateTimeOffset RequestedAt { get; set; } = DateTimeOffset.UtcNow;
 
-        public string? ApprovedBy { get; set; }            // admin who approved/rejected
+        public string? ApprovedBy { get; set; }            
         [Column(TypeName = "timestamptz")]
         public DateTimeOffset? ApprovalDate { get; set; }
 

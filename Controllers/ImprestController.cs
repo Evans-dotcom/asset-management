@@ -1,101 +1,141 @@
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.Imprest;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class ImprestController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ImprestController : ControllerBase
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public ImprestController(ApplicationDbContext context, IEmailService emailService)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _emailService = emailService;
+    }
 
-        public ImprestController(ApplicationDbContext context)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Imprest.ImprestCreateDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value;
+
+        var now = DateTimeOffset.UtcNow;
+
+        var entity = new Imprest
         {
-            _context = context;
-        }
+            Officer = dto.Officer,
+            Amount = dto.Amount,
+            DateIssued = dto.DateIssued,
+            Purpose = dto.Purpose,
+            Remarks = dto.Remarks,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = now
+        };
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(Imprest asset)
-        {
-            try
-            {
-                _context.Imprests.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create imprest: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        _context.Imprests.Add(entity);
+        await _context.SaveChangesAsync();
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, Imprest asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+        var summary = $"{entity.Officer} - {entity.Amount}";
+        await _emailService.NotifyAssetCreatedAsync("Imprest", entity.Id, summary, userEmail);
 
-            _context.Entry(asset).State = EntityState.Modified;
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Imprests.Any(a => a.Id == id))
-                    return NotFound($"Imprest with ID {id} not found.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update imprest: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        var pending = await _context.Imprests
+            .Where(i => i.Status == AssetStatus.Pending)
+            .ToListAsync();
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.Imprests.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Imprest with ID {id} not found.");
+        return Ok(pending);
+    }
 
-                _context.Imprests.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete imprest: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
+    {
+        var isAdmin = User.IsInRole("admin");
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.Imprests.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Imprest with ID {id} not found.");
+        if (isAdmin && includePending)
+            return Ok(await _context.Imprests.ToListAsync());
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving imprest: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        var list = await _context.Imprests
+            .Where(i => i.Status != AssetStatus.Pending)
+            .ToListAsync();
+
+        return Ok(list);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var entity = await _context.Imprests.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        var isAdmin = User.IsInRole("admin");
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst("sub")?.Value;
+
+        if (!isAdmin && !string.Equals(entity.RequestedBy, userEmail, StringComparison.OrdinalIgnoreCase))
+            return Forbid();
+
+        return Ok(entity);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] Imprest.ImprestApproveDto dto)
+    {
+        var entity = await _context.Imprests.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("sub")?.Value;
+
+        entity.ApprovedBy = adminEmail;
+        entity.ApprovalDate = DateTimeOffset.UtcNow;
+        entity.ApprovalRemarks = dto.Remarks;
+        entity.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
+
+        _context.Entry(entity).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+
+        var summary = $"{entity.Officer} - {entity.Amount}";
+        await _emailService.NotifyAssetApprovalAsync(
+            "Imprest",
+            entity.Id,
+            summary,
+            entity.RequestedBy,
+            dto.Approve,
+            dto.Remarks,
+            adminEmail
+        );
+
+        return NoContent();
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _context.Imprests.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.Imprests.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

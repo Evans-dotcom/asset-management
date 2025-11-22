@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,98 +13,127 @@ namespace AssetManagementSystem.Controllers
     public class BiologicalAssetController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public BiologicalAssetController(ApplicationDbContext context)
+        public BiologicalAssetController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(BiologicalAsset asset)
+        public async Task<IActionResult> Create([FromBody] BiologicalAsset.BiologicalAssetCreateDto dto)
         {
-            if (asset == null)
-                return BadRequest("Asset payload is required.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var now = DateTimeOffset.UtcNow;
+
+            var entity = new BiologicalAsset
             {
-                _context.BiologicalAssets.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error saving biological asset: {ex.Message}");
-            }
+                AssetType = dto.AssetType,
+                Quantity = dto.Quantity,
+                AcquisitionDate = dto.AcquisitionDate ?? now,
+                Location = dto.Location,
+                Value = dto.Value,
+                Notes = dto.Notes,
+                Department = dto.Department,
+                DepartmentUnit = dto.DepartmentUnit,
+                ContractDate = dto.ContractDate ?? now,
+                RequestedBy = userEmail,
+                RequestedAt = now
+            };
+
+            _context.BiologicalAssets.Add(entity);
+            await _context.SaveChangesAsync();
+
+            var summary = $"{entity.AssetType} - {entity.Quantity}";
+            await _emailService.NotifyAssetCreatedAsync("BiologicalAsset", entity.Id, summary, userEmail);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, BiologicalAsset asset)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
         {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch between route and payload.");
+            var pending = await _context.BiologicalAssets
+                .Where(a => a.ApprovedBy == null)
+                .ToListAsync();
 
-            var existing = await _context.BiologicalAssets.FindAsync(id);
-            if (existing == null)
-                return NotFound($"Biological asset with ID {id} not found.");
-
-            try
-            {
-                _context.Entry(asset).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Concurrency error while updating the biological asset.");
-            }
-        }
-
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var asset = await _context.BiologicalAssets.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Biological asset with ID {id} not found.");
-
-            try
-            {
-                _context.BiologicalAssets.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error deleting biological asset: {ex.Message}");
-            }
-        }
-
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var asset = await _context.BiologicalAssets.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Biological asset with ID {id} not found.");
-
-            return Ok(asset);
+            return Ok(pending);
         }
 
         [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] bool includeUnapproved = false)
         {
-            try
+            var isAdmin = User.IsInRole("admin");
+
+            if (isAdmin && includeUnapproved)
             {
-                var assets = await _context.BiologicalAssets.ToListAsync();
-                return Ok(assets);
+                var all = await _context.BiologicalAssets.ToListAsync();
+                return Ok(all);
             }
-            catch (Exception ex)
+
+            var result = await _context.BiologicalAssets
+                .Where(a => a.ApprovedBy != null)
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var entity = await _context.BiologicalAssets.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            if (entity.ApprovedBy == null && !User.IsInRole("admin"))
             {
-                return StatusCode(500, $"Error retrieving biological assets: {ex.Message}");
+                var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(email, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
             }
+
+            return Ok(entity);
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] BiologicalAsset.BiologicalAssetApproveDto dto)
+        {
+            var entity = await _context.BiologicalAssets.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            entity.ApprovedBy = adminEmail;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+
+            if (!dto.Approve)
+                entity.ApprovedBy = "REJECTED";
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            var summary = $"{entity.AssetType} - {entity.Quantity}";
+            await _emailService.NotifyAssetApprovalAsync("BiologicalAsset", entity.Id, summary, entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
+
+            return NoContent();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _context.BiologicalAssets.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            _context.BiologicalAssets.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

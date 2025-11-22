@@ -1,97 +1,128 @@
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.Litigation;
+using AssetStatus = Asset_management.models.Litigation.AssetStatus;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class LitigationController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class LitigationController : ControllerBase
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public LitigationController(ApplicationDbContext context, IEmailService emailService)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _emailService = emailService;
+    }
 
-        public LitigationController(ApplicationDbContext context)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] LitigationCreateDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        var entity = new Litigation
         {
-            _context = context;
+            CaseNumber = dto.CaseNumber,
+            PartiesInvolved = dto.PartiesInvolved,
+            Subject = dto.Subject,
+            DateFiled = dto.DateFiled,
+            Remarks = dto.Remarks,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = DateTimeOffset.UtcNow,
+            Status = AssetStatus.Pending
+        };
+
+        _context.Litigations.Add(entity);
+        await _context.SaveChangesAsync();
+
+        await _emailService.NotifyAssetCreatedAsync("Litigation", entity.Id, entity.CaseNumber, userEmail);
+
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        var pending = await _context.Litigations
+            .Where(a => a.Status == AssetStatus.Pending)
+            .ToListAsync();
+
+        return Ok(pending);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
+    {
+        var isAdmin = User.IsInRole("admin");
+
+        if (isAdmin && includePending)
+            return Ok(await _context.Litigations.ToListAsync());
+
+        var result = await _context.Litigations
+            .Where(a => a.Status != AssetStatus.Pending)
+            .ToListAsync();
+
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var entity = await _context.Litigations.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        if (entity.Status == AssetStatus.Pending && !User.IsInRole("admin"))
+        {
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(Litigation asset)
-        {
-            try
-            {
-                _context.Litigations.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create litigation record: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        return Ok(entity);
+    }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Litigation asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] LitigationApproveDto dto)
+    {
+        var entity = await _context.Litigations.FindAsync(id);
+        if (entity == null) return NotFound();
 
-            _context.Entry(asset).State = EntityState.Modified;
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Litigations.Any(e => e.Id == id))
-                    return NotFound($"Litigation record with ID {id} does not exist.");
-                else
-                    return Conflict("A concurrency issue occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update litigation record: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        entity.ApprovedBy = adminEmail;
+        entity.ApprovalDate = DateTimeOffset.UtcNow;
+        entity.ApprovalRemarks = dto.Remarks;
+        entity.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.Litigations.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Litigation record with ID {id} not found.");
+        await _context.SaveChangesAsync();
 
-                _context.Litigations.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete litigation record: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        await _emailService.NotifyAssetApprovalAsync("Litigation", entity.Id, entity.CaseNumber, entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.Litigations.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Litigation record with ID {id} not found.");
+        return NoContent();
+    }
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving litigation record: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _context.Litigations.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.Litigations.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

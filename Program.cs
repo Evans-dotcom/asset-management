@@ -64,10 +64,16 @@ builder.Services.AddScoped<TokenService>();
 // 6. Swagger setup with JWT support
 builder.Services.AddSwaggerGen(c =>
 {
+    c.CustomSchemaIds(type => type.FullName.Replace("+", "."));
+});
+
+builder.Services.AddSwaggerGen(c =>
+{
     c.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Asset Management API",
         Version = "v1"
+
     });
 
     // JWT Bearer Auth

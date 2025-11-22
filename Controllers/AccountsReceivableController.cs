@@ -1,9 +1,16 @@
+using Asset_management.DTOs;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using static Asset_management.models.AccountsReceivable;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,101 +18,113 @@ namespace AssetManagementSystem.Controllers
     public class AccountsReceivableController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public AccountsReceivableController(ApplicationDbContext context)
+        public AccountsReceivableController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(AccountsReceivable asset)
+        public async Task<IActionResult> Create([FromBody] AccountsReceivableCreateDto dto)
         {
-            try
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var now = DateTimeOffset.UtcNow;
+
+            var entity = new AccountsReceivable
             {
-                _context.AccountsReceivables.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create record: {ex.InnerException?.Message ?? ex.Message}");
-            }
+                DebtorName = dto.DebtorName,
+                AmountDue = dto.AmountDue,
+                DueDate = dto.DueDate,
+                Reason = dto.Reason,
+                Remarks = dto.Remarks,
+                RequestedBy = userEmail,
+                RequestedAt = now
+            };
+
+            _context.AccountsReceivables.Add(entity);
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetCreatedAsync("AccountsReceivable", entity.Id, $"{entity.DebtorName} - {entity.AmountDue}", userEmail);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, AccountsReceivable asset)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
         {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
-
-            _context.Entry(asset).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.AccountsReceivables.Any(a => a.Id == id))
-                    return NotFound($"Record with ID {id} does not exist.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update record: {ex.InnerException?.Message ?? ex.Message}");
-            }
+            var pending = await _context.AccountsReceivables
+                .Where(a => a.ApprovedBy == null)
+                .ToListAsync();
+            return Ok(pending);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] bool includeUnapproved = false)
         {
-            try
-            {
-                var asset = await _context.AccountsReceivables.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Record with ID {id} not found.");
+            var isAdmin = User.IsInRole("admin");
 
-                _context.AccountsReceivables.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
+            if (isAdmin && includeUnapproved)
             {
-                return BadRequest($"Failed to delete record: {ex.InnerException?.Message ?? ex.Message}");
+                var all = await _context.AccountsReceivables.ToListAsync();
+                return Ok(all);
             }
+
+            var result = await _context.AccountsReceivables
+                .Where(a => a.ApprovedBy != null)
+                .ToListAsync();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var asset = await _context.AccountsReceivables.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Record with ID {id} not found.");
+            var entity = await _context.AccountsReceivables.FindAsync(id);
+            if (entity == null) return NotFound();
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
+            if (entity.ApprovedBy == null && !User.IsInRole("admin"))
             {
-                return StatusCode(500, $"Error retrieving record: {ex.InnerException?.Message ?? ex.Message}");
+                var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
             }
+
+            return Ok(entity);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] AccountsReceivableApproveDto dto)
         {
-            try
-            {
-                var list = await _context.AccountsReceivables.ToListAsync();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving records: {ex.InnerException?.Message ?? ex.Message}");
-            }
+            var entity = await _context.AccountsReceivables.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            entity.ApprovedBy = adminEmail;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetApprovalAsync("AccountsReceivable", entity.Id, $"{entity.DebtorName} - {entity.AmountDue}", entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
+
+            return NoContent();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _context.AccountsReceivables.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            _context.AccountsReceivables.Remove(entity);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

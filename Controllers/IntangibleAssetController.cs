@@ -1,100 +1,131 @@
+using Asset_management.DTOs;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.IntangibleAsset;
+using AssetStatus = Asset_management.models.IntangibleAsset.AssetStatus;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class IntangibleAssetController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class IntangibleAssetController : ControllerBase
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public IntangibleAssetController(ApplicationDbContext context, IEmailService emailService)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _emailService = emailService;
+    }
 
-        public IntangibleAssetController(ApplicationDbContext context)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] IntangibleAssetCreateDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value
+            ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        var entity = new IntangibleAsset
         {
-            _context = context;
+            AssetType = dto.AssetType,
+            Description = dto.Description,
+            Value = dto.Value,
+            UsefulLifeYears = dto.UsefulLifeYears,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = DateTimeOffset.UtcNow,
+            Status = AssetStatus.Pending
+        };
+
+        _context.IntangibleAssets.Add(entity);
+        await _context.SaveChangesAsync();
+
+        await _emailService.NotifyAssetCreatedAsync(
+            "IntangibleAsset", entity.Id, $"{entity.AssetType} - {entity.Value}", userEmail
+        );
+
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        return Ok(await _context.IntangibleAssets
+            .Where(a => a.Status == AssetStatus.Pending)
+            .ToListAsync());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
+    {
+        if (User.IsInRole("admin") && includePending)
+            return Ok(await _context.IntangibleAssets.ToListAsync());
+
+        return Ok(await _context.IntangibleAssets
+            .Where(a => a.Status != AssetStatus.Pending)
+            .ToListAsync());
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var entity = await _context.IntangibleAssets.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        if (entity.Status == AssetStatus.Pending && !User.IsInRole("admin"))
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (!string.Equals(email, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
         }
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(IntangibleAsset asset)
-        {
-            try
-            {
-                _context.IntangibleAssets.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        return Ok(entity);
+    }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, IntangibleAsset asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] IntangibleAssetApproveDto dto)
+    {
+        var entity = await _context.IntangibleAssets.FindAsync(id);
+        if (entity == null) return NotFound();
 
-            _context.Entry(asset).State = EntityState.Modified;
+        var adminEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        entity.ApprovedBy = adminEmail;
+        entity.ApprovalDate = DateTimeOffset.UtcNow;
+        entity.ApprovalRemarks = dto.Remarks;
+        entity.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.IntangibleAssets.Any(a => a.Id == id))
-                    return NotFound($"Intangible asset with ID {id} not found.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        await _context.SaveChangesAsync();
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.IntangibleAssets.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Intangible asset with ID {id} not found.");
+        await _emailService.NotifyAssetApprovalAsync(
+            "IntangibleAsset",
+            id,
+            $"{entity.AssetType} - {entity.Value}",
+            entity.RequestedBy,
+            dto.Approve,
+            dto.Remarks,
+            adminEmail
+        );
 
-                _context.IntangibleAssets.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        return NoContent();
+    }
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.IntangibleAssets.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Intangible asset with ID {id} not found.");
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _context.IntangibleAssets.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.IntangibleAssets.Remove(entity);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

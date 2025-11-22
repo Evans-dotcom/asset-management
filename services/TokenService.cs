@@ -29,15 +29,18 @@ namespace Asset_management.services
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Email),
+                new Claim(ClaimTypes.Role, user.Role),
                 new Claim("role", user.Role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             var token = new JwtSecurityToken(
-                issuer,
-                audience,
-                claims,
-                expires: DateTime.Now.AddMinutes(expiryInMinutes),
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
                 signingCredentials: credentials
             );
 

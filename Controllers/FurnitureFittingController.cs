@@ -1,9 +1,12 @@
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.FurnitureFitting;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,78 +14,164 @@ namespace AssetManagementSystem.Controllers
     public class FurnitureFittingController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public FurnitureFittingController(ApplicationDbContext context)
+        public FurnitureFittingController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
+        // CREATE
         [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(FurnitureFitting asset)
+        public async Task<IActionResult> Create([FromBody] FurnitureFitting.FurnitureFittingCreateDto dto)
         {
-            try
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            var entity = new FurnitureFitting
             {
-                _context.FurnitureFittings.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error creating asset: {ex.Message}");
-            }
+                ItemDescription = dto.ItemDescription,
+                SerialNumber = dto.SerialNumber,
+                Quantity = dto.Quantity,
+                Location = dto.Location,
+                Department = dto.Department,
+                DepartmentUnit = dto.DepartmentUnit,
+                PurchaseDate = dto.PurchaseDate,
+                PurchaseCost = dto.PurchaseCost,
+                ResponsibleOfficer = dto.ResponsibleOfficer,
+                Condition = dto.Condition,
+                RequestedBy = userEmail,
+                RequestedAt = DateTimeOffset.UtcNow,
+                Status = AssetStatus.Pending
+            };
+
+            _context.FurnitureFittings.Add(entity);
+            await _context.SaveChangesAsync();
+
+            // Send notification
+            var summary = $"{entity.ItemDescription} - {entity.Quantity}";
+            await _emailService.NotifyAssetCreatedAsync("FurnitureFitting", entity.Id, summary, userEmail);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
+        // GET ALL (optionally include pending for admins)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
+        {
+            var isAdmin = User.IsInRole("admin");
+
+            if (isAdmin && includePending)
+            {
+                return Ok(await _context.FurnitureFittings.ToListAsync());
+            }
+
+            var result = await _context.FurnitureFittings
+                .Where(a => a.Status == AssetStatus.Approved)
+                .ToListAsync();
+
+            return Ok(result);
+        }
+
+        // GET PENDING (admin only)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
+        {
+            var pending = await _context.FurnitureFittings
+                .Where(a => a.Status == AssetStatus.Pending)
+                .ToListAsync();
+            return Ok(pending);
+        }
+
+        // GET BY ID
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var entity = await _context.FurnitureFittings.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            if (entity.Status == AssetStatus.Pending && !User.IsInRole("admin"))
+            {
+                var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
+            }
+
+            return Ok(entity);
+        }
+
+        // UPDATE (admin only)
+        [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, FurnitureFitting asset)
+        public async Task<IActionResult> Update(int id, [FromBody] FurnitureFitting.FurnitureFittingCreateDto dto)
         {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+            var entity = await _context.FurnitureFittings.FindAsync(id);
+            if (entity == null) return NotFound();
 
-            _context.Entry(asset).State = EntityState.Modified;
+            entity.ItemDescription = dto.ItemDescription;
+            entity.SerialNumber = dto.SerialNumber;
+            entity.Quantity = dto.Quantity;
+            entity.Location = dto.Location;
+            entity.Department = dto.Department;
+            entity.DepartmentUnit = dto.DepartmentUnit;
+            entity.PurchaseDate = dto.PurchaseDate;
+            entity.PurchaseCost = dto.PurchaseCost;
+            entity.ResponsibleOfficer = dto.ResponsibleOfficer;
+            entity.Condition = dto.Condition;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.FurnitureFittings.Any(a => a.Id == id))
-                    return NotFound($"Furniture fitting with ID {id} not found.");
-                else
-                    throw;
-            }
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
+        // DELETE (admin only)
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        [AllowAnonymous]
         public async Task<IActionResult> Delete(int id)
         {
-            var asset = await _context.FurnitureFittings.FindAsync(id);
-            if (asset == null) return NotFound($"Furniture fitting with ID {id} not found.");
+            var entity = await _context.FurnitureFittings.FindAsync(id);
+            if (entity == null) return NotFound();
 
-            _context.FurnitureFittings.Remove(asset);
+            _context.FurnitureFittings.Remove(entity);
             await _context.SaveChangesAsync();
             return NoContent();
         }
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
+        // APPROVE / REJECT (admin only)
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] FurnitureFitting.FurnitureFittingApproveDto dto)
         {
-            var asset = await _context.FurnitureFittings.FindAsync(id);
-            if (asset == null) return NotFound($"Furniture fitting with ID {id} not found.");
-            return Ok(asset);
-        }
+            var entity = await _context.FurnitureFittings.FindAsync(id);
+            if (entity == null) return NotFound();
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
-        {
-            var assets = await _context.FurnitureFittings.ToListAsync();
-            return Ok(assets);
+            var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            // Approval logic
+            entity.ApprovedBy = adminEmail;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+            entity.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            var summary = $"{entity.ItemDescription} - {entity.Quantity}";
+            await _emailService.NotifyAssetApprovalAsync(
+                "FurnitureFitting",
+                entity.Id,
+                summary,
+                entity.RequestedBy,
+                dto.Approve,
+                dto.Remarks,
+                adminEmail
+            );
+
+            return NoContent();
         }
     }
 }

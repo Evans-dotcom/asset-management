@@ -1,116 +1,138 @@
+using System.Security.Claims;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class LandRegisterController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class LandRegisterController : ControllerBase
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public LandRegisterController(ApplicationDbContext context, IEmailService emailService)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _emailService = emailService;
+    }
 
-        public LandRegisterController(ApplicationDbContext context)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] LandRegister.LandRegisterCreateDto dto)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+        var now = DateTimeOffset.UtcNow;
+
+        var entity = new LandRegister
         {
-            _context = context;
+            ParcelNumber = dto.ParcelNumber,
+            Location = dto.Location,
+            Acreage = dto.Acreage,
+            TitleDeedNumber = dto.TitleDeedNumber,
+            DateAcquired = dto.DateAcquired,
+            OwnershipStatus = dto.OwnershipStatus,
+            LandValue = dto.LandValue,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = now,
+            Status = LandRegister.LandRegisterStatus.Pending
+        };
+
+        _context.LandRegisters.Add(entity);
+        await _context.SaveChangesAsync();
+
+        var summary = $"{entity.ParcelNumber} - {entity.Location}";
+        await _emailService.NotifyAssetCreatedAsync("LandRegister", entity.Id, summary, userEmail);
+
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        var pending = await _context.LandRegisters
+            .Where(a => a.Status == LandRegister.LandRegisterStatus.Pending)
+            .ToListAsync();
+        return Ok(pending);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] bool includeUnapproved = false)
+    {
+        var isAdmin = User.IsInRole("admin");
+
+        if (isAdmin && includeUnapproved)
+        {
+            var all = await _context.LandRegisters.ToListAsync();
+            return Ok(all);
         }
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create([FromBody] LandRegister asset)
+        var allowedStatuses = new[]
         {
-            try
-            {
-                _context.LandRegisters.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create land register: {ex.InnerException?.Message ?? ex.Message}");
-            }
+            LandRegister.LandRegisterStatus.Approved,
+            LandRegister.LandRegisterStatus.Rejected
+        };
+
+        var list = await _context.LandRegisters
+            .Where(a => allowedStatuses.Contains(a.Status))
+            .ToListAsync();
+
+        return Ok(list);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var entity = await _context.LandRegisters.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        if (entity.Status != LandRegister.LandRegisterStatus.Approved && !User.IsInRole("admin"))
+        {
+            var email = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (!string.Equals(email, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
         }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, [FromBody] LandRegister asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+        return Ok(entity);
+    }
 
-            _context.Entry(asset).State = EntityState.Modified;
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] LandRegister.LandRegisterApproveDto dto)
+    {
+        var entity = await _context.LandRegisters.FindAsync(id);
+        if (entity == null) return NotFound();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.LandRegisters.Any(a => a.Id == id))
-                    return NotFound($"Land register with ID {id} not found.");
-                else
-                    return Conflict("A concurrency conflict occurred. Please retry.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update land register: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.LandRegisters.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Land register with ID {id} not found.");
+        entity.ApprovedBy = adminEmail;
+        entity.ApprovalDate = DateTimeOffset.UtcNow;
+        entity.ApprovalRemarks = dto.Remarks;
+        entity.Status = dto.Approve ? LandRegister.LandRegisterStatus.Approved : LandRegister.LandRegisterStatus.Rejected;
 
-                _context.LandRegisters.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete land register: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
-        {
-            try
-            {
-                var records = await _context.LandRegisters.ToListAsync();
-                return Ok(records);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Failed to retrieve records: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        _context.Entry(entity).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
 
+        var summary = $"{entity.ParcelNumber} - {entity.Location}";
+        await _emailService.NotifyAssetApprovalAsync("LandRegister", entity.Id, summary, entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.LandRegisters.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Land register with ID {id} not found.");
+        return NoContent();
+    }
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving land register: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _context.LandRegisters.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.LandRegisters.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

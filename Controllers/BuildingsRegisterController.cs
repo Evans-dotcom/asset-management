@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static Asset_management.models.BuildingsRegister;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,97 +14,126 @@ namespace AssetManagementSystem.Controllers
     public class BuildingsRegisterController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public BuildingsRegisterController(ApplicationDbContext context)
+        public BuildingsRegisterController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(BuildingsRegister asset)
+        public async Task<IActionResult> Create([FromBody] BuildingsRegisterCreateDto dto)
         {
-            if (asset == null)
-                return BadRequest("Asset payload is required.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
+            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var now = DateTimeOffset.UtcNow;
+
+            var entity = new BuildingsRegister
             {
-                _context.BuildingsRegisters.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error saving asset: {ex.Message}");
-            }
+                BuildingName = dto.BuildingName,
+                Location = dto.Location,
+                UsePurpose = dto.UsePurpose,
+                DateConstructed = dto.DateConstructed ?? now,
+                ConstructionCost = dto.ConstructionCost,
+                Depreciation = dto.Depreciation,
+                NetBookValue = dto.NetBookValue,
+                Department = dto.Department,
+                DepartmentUnit = dto.DepartmentUnit,
+                RequestedBy = user,
+                RequestedAt = now
+            };
+
+            _context.BuildingsRegisters.Add(entity);
+            await _context.SaveChangesAsync();
+
+            var summary = $"{entity.BuildingName} - {entity.Location}";
+            await _emailService.NotifyAssetCreatedAsync("BuildingsRegister", entity.Id, summary, user);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, BuildingsRegister asset)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
         {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch between route and payload.");
+            var pending = await _context.BuildingsRegisters
+                .Where(b => b.ApprovedBy == null)
+                .ToListAsync();
 
-            var existing = await _context.BuildingsRegisters.FindAsync(id);
-            if (existing == null)
-                return NotFound($"Building asset with ID {id} not found.");
-
-            try
-            {
-                _context.Entry(asset).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Concurrency error while updating the asset.");
-            }
+            return Ok(pending);
         }
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
         {
-            var asset = await _context.BuildingsRegisters.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Building asset with ID {id} not found.");
+            var isAdmin = User.IsInRole("admin");
 
-            try
+            if (isAdmin && includePending)
             {
-                _context.BuildingsRegisters.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
+                return Ok(await _context.BuildingsRegisters.ToListAsync());
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error deleting asset: {ex.Message}");
-            }
+
+            var result = await _context.BuildingsRegisters
+                .Where(b => b.ApprovedBy != null)
+                .ToListAsync();
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
-            var asset = await _context.BuildingsRegisters.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Building asset with ID {id} not found.");
+            var entity = await _context.BuildingsRegisters.FindAsync(id);
+            if (entity == null) return NotFound();
 
-            return Ok(asset);
+            if (entity.ApprovedBy == null && !User.IsInRole("admin"))
+            {
+                var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(user, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
+            }
+
+            return Ok(entity);
         }
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] BuildingsRegisterApproveDto dto)
         {
-            try
-            {
-                var assets = await _context.BuildingsRegisters.ToListAsync();
-                return Ok(assets);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving building assets: {ex.Message}");
-            }
+            var entity = await _context.BuildingsRegisters.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            var admin = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+            entity.ApprovedBy = admin;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+
+            if (!dto.Approve)
+                entity.ApprovedBy = "REJECTED";
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            var summary = $"{entity.BuildingName} - {entity.Location}";
+            await _emailService.NotifyAssetApprovalAsync("BuildingsRegister", entity.Id, summary, entity.RequestedBy, dto.Approve, dto.Remarks, admin);
+
+            return NoContent();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _context.BuildingsRegisters.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            _context.BuildingsRegisters.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

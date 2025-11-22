@@ -22,7 +22,12 @@ namespace Asset_management.Migrations
                     AmountDue = table.Column<decimal>(type: "numeric", nullable: false),
                     DueDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -39,7 +44,12 @@ namespace Asset_management.Migrations
                     AmountDue = table.Column<decimal>(type: "numeric", nullable: false),
                     DueDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Reason = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -60,7 +70,12 @@ namespace Asset_management.Migrations
                     ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     DateHandedOver = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,7 +96,12 @@ namespace Asset_management.Migrations
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -103,7 +123,12 @@ namespace Asset_management.Migrations
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -123,7 +148,11 @@ namespace Asset_management.Migrations
                     ApprovedBy = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -168,13 +197,18 @@ namespace Asset_management.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     AssetType = table.Column<string>(type: "text", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
-                    AcquisitionDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    AcquisitionDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     Location = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -195,7 +229,12 @@ namespace Asset_management.Migrations
                     Depreciation = table.Column<decimal>(type: "numeric", nullable: false),
                     NetBookValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -216,7 +255,12 @@ namespace Asset_management.Migrations
                     ConditionOnReturn = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -238,7 +282,13 @@ namespace Asset_management.Migrations
                     PurchaseDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     PurchaseCost = table.Column<decimal>(type: "numeric", nullable: false),
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
-                    Condition = table.Column<string>(type: "text", nullable: false)
+                    Condition = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -255,10 +305,15 @@ namespace Asset_management.Migrations
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     DateIssued = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Purpose = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -277,7 +332,13 @@ namespace Asset_management.Migrations
                     Value = table.Column<decimal>(type: "numeric", nullable: false),
                     UsefulLifeYears = table.Column<int>(type: "integer", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -297,7 +358,13 @@ namespace Asset_management.Migrations
                     ExpectedReturn = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -318,7 +385,13 @@ namespace Asset_management.Migrations
                     OwnershipStatus = table.Column<string>(type: "text", nullable: false),
                     LandValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -338,7 +411,13 @@ namespace Asset_management.Migrations
                     LeaseCost = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -354,11 +433,16 @@ namespace Asset_management.Migrations
                     CaseNumber = table.Column<string>(type: "text", nullable: false),
                     PartiesInvolved = table.Column<string>(type: "text", nullable: false),
                     Subject = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
                     DateFiled = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -375,10 +459,15 @@ namespace Asset_management.Migrations
                     LossDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Cause = table.Column<string>(type: "text", nullable: false),
                     ReportedBy = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -398,7 +487,13 @@ namespace Asset_management.Migrations
                     Cost = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -422,7 +517,13 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     ResponsibleOfficer = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -442,7 +543,13 @@ namespace Asset_management.Migrations
                     AcquisitionDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -459,7 +566,13 @@ namespace Asset_management.Migrations
                     Amount = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -480,7 +593,13 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     OperationalStatus = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -501,7 +620,13 @@ namespace Asset_management.Migrations
                     Location = table.Column<string>(type: "text", nullable: false),
                     DateIssued = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Condition = table.Column<string>(type: "text", nullable: false),
-                    Remarks = table.Column<string>(type: "text", nullable: false)
+                    Remarks = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -522,7 +647,13 @@ namespace Asset_management.Migrations
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
                     DepartmentUnit = table.Column<string>(type: "text", nullable: false),
-                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false)
+                    ContractDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -552,7 +683,13 @@ namespace Asset_management.Migrations
                     AssetCondition = table.Column<string>(type: "text", nullable: false),
                     Notes = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -574,7 +711,13 @@ namespace Asset_management.Migrations
                     LastRestocked = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -594,7 +737,13 @@ namespace Asset_management.Migrations
                     ValueEstimate = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -629,7 +778,12 @@ namespace Asset_management.Migrations
                     CurrentValue = table.Column<decimal>(type: "numeric", nullable: false),
                     Remarks = table.Column<string>(type: "text", nullable: false),
                     Department = table.Column<string>(type: "text", nullable: false),
-                    DepartmentUnit = table.Column<string>(type: "text", nullable: false)
+                    DepartmentUnit = table.Column<string>(type: "text", nullable: false),
+                    RequestedBy = table.Column<string>(type: "text", nullable: false),
+                    RequestedAt = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false),
+                    ApprovedBy = table.Column<string>(type: "text", nullable: true),
+                    ApprovalDate = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
+                    ApprovalRemarks = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

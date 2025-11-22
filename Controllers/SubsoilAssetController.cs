@@ -2,100 +2,101 @@ using Asset_management.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.SubsoilAsset;
+using AssetStatus = Asset_management.models.SubsoilAsset.AssetStatus;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class SubsoilAssetController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class SubsoilAssetController : ControllerBase
+    private readonly ApplicationDbContext _context;
+
+    public SubsoilAssetController(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+    }
 
-        public SubsoilAssetController(ApplicationDbContext context)
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll()
+    {
+        var assets = await _context.SubsoilAssets.ToListAsync();
+        return Ok(assets);
+    }
+
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var asset = await _context.SubsoilAssets.FindAsync(id);
+        if (asset == null) return NotFound();
+        return Ok(asset);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] SubsoilAssetCreateDto dto)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        var asset = new SubsoilAsset
         {
-            _context = context;
-        }
+            ResourceType = dto.ResourceType,
+            Location = dto.Location,
+            EstimatedVolume = dto.EstimatedVolume,
+            OwnershipStatus = dto.OwnershipStatus,
+            ValueEstimate = dto.ValueEstimate,
+            Remarks = dto.Remarks,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = DateTimeOffset.UtcNow,
+            Status = AssetStatus.Pending
+        };
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(SubsoilAsset asset)
-        {
-            try
-            {
-                _context.SubsoilAssets.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        _context.SubsoilAssets.Add(asset);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+    }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, SubsoilAsset asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("Asset ID mismatch.");
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] SubsoilAssetApproveDto dto)
+    {
+        var asset = await _context.SubsoilAssets.FindAsync(id);
+        if (asset == null) return NotFound();
 
-            _context.Entry(asset).State = EntityState.Modified;
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.SubsoilAssets.Any(a => a.Id == id))
-                    return NotFound($"Asset with ID {id} does not exist.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        asset.ApprovedBy = adminEmail;
+        asset.ApprovalDate = DateTimeOffset.UtcNow;
+        asset.ApprovalRemarks = dto.Remarks;
+        asset.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.SubsoilAssets.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 
-                _context.SubsoilAssets.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, SubsoilAsset updatedAsset)
+    {
+        if (id != updatedAsset.Id) return BadRequest("ID mismatch");
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.SubsoilAssets.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
+        _context.Entry(updatedAsset).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var asset = await _context.SubsoilAssets.FindAsync(id);
+        if (asset == null) return NotFound();
+
+        _context.SubsoilAssets.Remove(asset);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

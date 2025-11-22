@@ -1,9 +1,16 @@
+using Asset_management.DTOs;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using static Asset_management.models.AssetReconciliation;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,101 +18,118 @@ namespace AssetManagementSystem.Controllers
     public class AssetReconciliationController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public AssetReconciliationController(ApplicationDbContext context)
+        public AssetReconciliationController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(AssetReconciliation asset)
+        public async Task<IActionResult> Create([FromBody] AssetReconciliationCreateDto dto)
         {
-            try
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var now = DateTimeOffset.UtcNow;
+
+            var entity = new AssetReconciliation
             {
-                _context.AssetReconciliations.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create reconciliation: {ex.InnerException?.Message ?? ex.Message}");
-            }
+                AssetId = dto.AssetId,
+                DateReconciled = dto.DateReconciled ?? now,
+                PhysicalCount = dto.PhysicalCount,
+                SystemCount = dto.SystemCount,
+                ReconciledBy = dto.ReconciledBy,
+                Discrepancy = dto.Discrepancy,
+                Remarks = dto.Remarks,
+                Department = dto.Department,
+                DepartmentUnit = dto.DepartmentUnit,
+                ContractDate = dto.ContractDate ?? now,
+                RequestedBy = userEmail,
+                RequestedAt = now
+            };
+
+            _context.AssetReconciliations.Add(entity);
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetCreatedAsync("AssetReconciliation", entity.Id, $"Asset {entity.AssetId} reconciled by {entity.ReconciledBy}", userEmail);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, AssetReconciliation asset)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
         {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
-
-            _context.Entry(asset).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.AssetReconciliations.Any(a => a.Id == id))
-                    return NotFound($"Reconciliation with ID {id} not found.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update reconciliation: {ex.InnerException?.Message ?? ex.Message}");
-            }
+            var pending = await _context.AssetReconciliations
+                .Where(a => a.ApprovedBy == null)
+                .ToListAsync();
+            return Ok(pending);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] bool includeUnapproved = false)
         {
-            try
-            {
-                var asset = await _context.AssetReconciliations.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Reconciliation with ID {id} not found.");
+            var isAdmin = User.IsInRole("admin");
 
-                _context.AssetReconciliations.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
+            if (isAdmin && includeUnapproved)
             {
-                return BadRequest($"Failed to delete reconciliation: {ex.InnerException?.Message ?? ex.Message}");
+                var all = await _context.AssetReconciliations.ToListAsync();
+                return Ok(all);
             }
+
+            var result = await _context.AssetReconciliations
+                .Where(a => a.ApprovedBy != null)
+                .ToListAsync();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var asset = await _context.AssetReconciliations.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Reconciliation with ID {id} not found.");
+            var entity = await _context.AssetReconciliations.FindAsync(id);
+            if (entity == null) return NotFound();
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
+            if (entity.ApprovedBy == null && !User.IsInRole("admin"))
             {
-                return StatusCode(500, $"Error retrieving reconciliation: {ex.InnerException?.Message ?? ex.Message}");
+                var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
             }
+
+            return Ok(entity);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] AssetReconciliationApproveDto dto)
         {
-            try
-            {
-                var list = await _context.AssetReconciliations.ToListAsync();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving reconciliations: {ex.InnerException?.Message ?? ex.Message}");
-            }
+            var entity = await _context.AssetReconciliations.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            entity.ApprovedBy = adminEmail;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetApprovalAsync("AssetReconciliation", entity.Id, $"Asset {entity.AssetId} reconciled by {entity.ReconciledBy}", entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
+
+            return NoContent();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _context.AssetReconciliations.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            _context.AssetReconciliations.Remove(entity);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

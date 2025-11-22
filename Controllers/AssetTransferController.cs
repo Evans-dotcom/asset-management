@@ -1,9 +1,16 @@
+using Asset_management.DTOs;
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using static Asset_management.models.AssetTransfer;
 
-namespace AssetManagementSystem.Controllers
+namespace Asset_management.Controllers
 {
     [Authorize]
     [ApiController]
@@ -11,79 +18,116 @@ namespace AssetManagementSystem.Controllers
     public class AssetTransferController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public AssetTransferController(ApplicationDbContext context)
+        public AssetTransferController(ApplicationDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(AssetTransfer asset)
+        public async Task<IActionResult> Create([FromBody] AssetTransferCreateDto dto)
         {
-            if (asset == null)
-                return BadRequest("Asset payload is required.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            var now = DateTimeOffset.UtcNow;
 
-            try
+            var entity = new AssetTransfer
             {
-                _context.AssetTransfers.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error saving asset transfer: {ex.Message}");
-            }
+                AssetId = dto.AssetId,
+                FromDepartment = dto.FromDepartment,
+                ToDepartment = dto.ToDepartment,
+                DateTransferred = dto.DateTransferred ?? now,
+                Remarks = dto.Remarks,
+                Department = dto.Department,
+                DepartmentUnit = dto.DepartmentUnit,
+                ApprovedBy = null,
+                RequestedBy = userEmail,
+                RequestedAt = now
+            };
+
+            _context.AssetTransfers.Add(entity);
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetCreatedAsync("AssetTransfer", entity.Id, $"Asset {entity.AssetId} transfer from {entity.FromDepartment} to {entity.ToDepartment}", userEmail);
+
+            return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, AssetTransfer asset)
+        [Authorize(Roles = "admin")]
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetPending()
         {
-            if (id != asset.Id)
-                return BadRequest("ID in route does not match asset ID.");
-
-            var existing = await _context.AssetTransfers.FindAsync(id);
-            if (existing == null)
-                return NotFound($"Asset transfer with ID {id} not found.");
-
-            try
-            {
-                _context.Entry(asset).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Concurrency error while updating the asset transfer.");
-            }
+            var pending = await _context.AssetTransfers
+                .Where(a => a.ApprovedBy == null)
+                .ToListAsync();
+            return Ok(pending);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] bool includeUnapproved = false)
         {
-            var asset = await _context.AssetTransfers.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Asset transfer with ID {id} not found.");
+            var isAdmin = User.IsInRole("admin");
 
-            try
+            if (isAdmin && includeUnapproved)
             {
-                _context.AssetTransfers.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
+                var all = await _context.AssetTransfers.ToListAsync();
+                return Ok(all);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error deleting asset transfer: {ex.Message}");
-            }
+
+            var result = await _context.AssetTransfers
+                .Where(a => a.ApprovedBy != null)
+                .ToListAsync();
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var asset = await _context.AssetTransfers.FindAsync(id);
-            if (asset == null)
-                return NotFound($"Asset transfer with ID {id} not found.");
+            var entity = await _context.AssetTransfers.FindAsync(id);
+            if (entity == null) return NotFound();
 
-            return Ok(asset);
+            if (entity.ApprovedBy == null && !User.IsInRole("admin"))
+            {
+                var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+                if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                    return Forbid();
+            }
+
+            return Ok(entity);
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpPost("{id}/approve")]
+        public async Task<IActionResult> Approve(int id, [FromBody] AssetTransferApproveDto dto)
+        {
+            var entity = await _context.AssetTransfers.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            entity.ApprovedBy = adminEmail;
+            entity.ApprovalDate = DateTimeOffset.UtcNow;
+            entity.ApprovalRemarks = dto.Remarks;
+
+            _context.Entry(entity).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            await _emailService.NotifyAssetApprovalAsync("AssetTransfer", entity.Id, $"Asset {entity.AssetId} transfer from {entity.FromDepartment} to {entity.ToDepartment}", entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
+
+            return NoContent();
+        }
+
+        [Authorize(Roles = "admin")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var entity = await _context.AssetTransfers.FindAsync(id);
+            if (entity == null) return NotFound();
+
+            _context.AssetTransfers.Remove(entity);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }

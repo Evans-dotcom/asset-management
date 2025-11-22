@@ -2,100 +2,105 @@ using Asset_management.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.StocksRegister;
+using AssetStatus = Asset_management.models.StocksRegister.AssetStatus;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class StocksRegisterController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class StocksRegisterController : ControllerBase
+    private readonly ApplicationDbContext _context;
+
+    public StocksRegisterController(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+    }
 
-        public StocksRegisterController(ApplicationDbContext context)
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll()
+    {
+        var assets = await _context.StocksRegisters.ToListAsync();
+        return Ok(assets);
+    }
+
+    [HttpGet("{id}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var asset = await _context.StocksRegisters.FindAsync(id);
+        if (asset == null) return NotFound();
+        return Ok(asset);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] StocksRegisterCreateDto dto)
+    {
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        var asset = new StocksRegister
         {
-            _context = context;
-        }
+            ItemName = dto.ItemName,
+            Unit = dto.Unit,
+            Quantity = dto.Quantity,
+            UnitCost = dto.UnitCost,
+            TotalValue = dto.TotalValue,
+            Location = dto.Location,
+            LastRestocked = dto.LastRestocked,
+            Remarks = dto.Remarks,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = DateTimeOffset.UtcNow,
+            Status = AssetStatus.Pending
+        };
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(StocksRegister asset)
-        {
-            try
-            {
-                _context.StocksRegisters.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        _context.StocksRegisters.Add(asset);
+        await _context.SaveChangesAsync();
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, StocksRegister asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("Asset ID mismatch.");
+        return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
+    }
 
-            _context.Entry(asset).State = EntityState.Modified;
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] StocksRegisterApproveDto dto)
+    {
+        var asset = await _context.StocksRegisters.FindAsync(id);
+        if (asset == null) return NotFound();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.StocksRegisters.Any(a => a.Id == id))
-                    return NotFound($"Asset with ID {id} does not exist.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.StocksRegisters.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
+        asset.ApprovedBy = adminEmail;
+        asset.ApprovalDate = DateTimeOffset.UtcNow;
+        asset.ApprovalRemarks = dto.Remarks;
+        asset.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
 
-                _context.StocksRegisters.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.StocksRegisters.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, StocksRegister updatedAsset)
+    {
+        if (id != updatedAsset.Id) return BadRequest("ID mismatch");
 
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        _context.Entry(updatedAsset).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var asset = await _context.StocksRegisters.FindAsync(id);
+        if (asset == null) return NotFound();
+
+        _context.StocksRegisters.Remove(asset);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }

@@ -33,6 +33,15 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("AmountDue")
                         .HasColumnType("numeric");
 
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("CreditorName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -45,6 +54,13 @@ namespace Asset_management.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -64,6 +80,15 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("AmountDue")
                         .HasColumnType("numeric");
 
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("DebtorName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -79,6 +104,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("AccountsReceivables");
@@ -91,6 +123,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
@@ -121,6 +162,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ToEmployee")
                         .IsRequired()
                         .HasColumnType("text");
@@ -137,6 +185,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
@@ -167,6 +224,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ToLocation")
                         .IsRequired()
                         .HasColumnType("text");
@@ -183,6 +247,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
@@ -216,6 +289,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("SystemCount")
                         .HasColumnType("integer");
 
@@ -231,6 +311,12 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
 
                     b.Property<string>("ApprovedBy")
                         .IsRequired()
@@ -255,6 +341,13 @@ namespace Asset_management.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -352,14 +445,23 @@ namespace Asset_management.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("AcquisitionDate")
+                    b.Property<DateTimeOffset?>("AcquisitionDate")
                         .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssetType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("ContractDate")
+                    b.Property<DateTimeOffset?>("ContractDate")
                         .HasColumnType("timestamptz");
 
                     b.Property<string>("Department")
@@ -381,6 +483,13 @@ namespace Asset_management.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<decimal>("Value")
                         .HasColumnType("numeric");
 
@@ -396,6 +505,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("BuildingName")
                         .IsRequired()
@@ -425,6 +543,13 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("NetBookValue")
                         .HasColumnType("numeric");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("UsePurpose")
                         .IsRequired()
                         .HasColumnType("text");
@@ -444,6 +569,15 @@ namespace Asset_management.Migrations
 
                     b.Property<DateTimeOffset>("ActualReturnDate")
                         .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("ConditionOnReturn")
                         .IsRequired()
@@ -474,6 +608,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("EquipmentSignouts");
@@ -486,6 +627,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Condition")
                         .IsRequired()
@@ -516,6 +666,13 @@ namespace Asset_management.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ResponsibleOfficer")
                         .IsRequired()
                         .HasColumnType("text");
@@ -523,6 +680,9 @@ namespace Asset_management.Migrations
                     b.Property<string>("SerialNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -539,6 +699,15 @@ namespace Asset_management.Migrations
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("DateIssued")
                         .HasColumnType("timestamptz");
@@ -563,9 +732,15 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -579,6 +754,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssetType")
                         .IsRequired()
@@ -598,6 +782,16 @@ namespace Asset_management.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("UsefulLifeYears")
                         .HasColumnType("integer");
@@ -620,6 +814,15 @@ namespace Asset_management.Migrations
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("DateInvested")
                         .HasColumnType("timestamptz");
@@ -647,6 +850,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Investments");
@@ -662,6 +875,15 @@ namespace Asset_management.Migrations
 
                     b.Property<decimal>("Acreage")
                         .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("DateAcquired")
                         .HasColumnType("timestamptz");
@@ -689,6 +911,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<string>("TitleDeedNumber")
                         .IsRequired()
                         .HasColumnType("text");
@@ -705,6 +937,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -735,6 +976,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Leases");
@@ -747,6 +998,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("CaseNumber")
                         .IsRequired()
@@ -771,9 +1031,15 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Subject")
                         .IsRequired()
@@ -791,6 +1057,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
@@ -818,9 +1093,15 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -834,6 +1115,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<int>("AssetId")
                         .HasColumnType("integer");
@@ -863,6 +1153,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("MajorMaintenances");
@@ -875,6 +1175,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("ChassisNumber")
                         .IsRequired()
@@ -914,9 +1223,19 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ResponsibleOfficer")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("YearOfManufacture")
                         .HasColumnType("integer");
@@ -936,6 +1255,15 @@ namespace Asset_management.Migrations
 
                     b.Property<DateTimeOffset>("AcquisitionDate")
                         .HasColumnType("timestamptz");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssetName")
                         .IsRequired()
@@ -961,6 +1289,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Value")
                         .HasColumnType("numeric");
 
@@ -980,6 +1318,15 @@ namespace Asset_management.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
 
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
                     b.Property<string>("Department")
                         .IsRequired()
                         .HasColumnType("text");
@@ -996,6 +1343,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("OtherReceivables");
@@ -1008,6 +1365,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1036,9 +1402,19 @@ namespace Asset_management.Migrations
                     b.Property<DateTimeOffset>("PurchaseDate")
                         .HasColumnType("timestamptz");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("SerialNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Value")
                         .HasColumnType("numeric");
@@ -1055,6 +1431,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssignedTo")
                         .IsRequired()
@@ -1087,6 +1472,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<string>("TagNumber")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1103,6 +1498,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<decimal>("ConstructionCost")
                         .HasColumnType("numeric");
@@ -1129,9 +1533,19 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("RoadName")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<int>("YearConstructed")
                         .HasColumnType("integer");
@@ -1154,6 +1568,15 @@ namespace Asset_management.Migrations
 
                     b.Property<decimal>("AnnualDepreciation")
                         .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("AssetCondition")
                         .IsRequired()
@@ -1202,6 +1625,13 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ResponsibleOfficer")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1209,6 +1639,9 @@ namespace Asset_management.Migrations
                     b.Property<string>("SerialNumber")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("TagNumber")
                         .IsRequired()
@@ -1226,6 +1659,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1253,6 +1695,16 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("TotalValue")
                         .HasColumnType("numeric");
 
@@ -1275,6 +1727,15 @@ namespace Asset_management.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Department")
                         .IsRequired()
@@ -1300,9 +1761,19 @@ namespace Asset_management.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ResourceType")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("ValueEstimate")
                         .HasColumnType("numeric");
@@ -1349,6 +1820,15 @@ namespace Asset_management.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTimeOffset?>("ApprovalDate")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("ApprovalRemarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("CurrentValue")
                         .HasColumnType("numeric");
 
@@ -1368,6 +1848,13 @@ namespace Asset_management.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Remarks")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("RequestedBy")
                         .IsRequired()
                         .HasColumnType("text");
 

@@ -2,10 +2,13 @@
 using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.CodeModifier.CodeChange;
+using Microsoft.Extensions.Hosting;
+using System.Security.Policy;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace AssetManagementSystem.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
@@ -19,17 +22,33 @@ namespace AssetManagementSystem.Controllers
             _tokenService = tokenService;
         }
 
-        [HttpPost("register")]
         [AllowAnonymous]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] User user)
         {
             try
             {
+                if (user == null)
+                    return BadRequest("User data is required.");
+
+                if (string.IsNullOrEmpty(user.Username))
+                    return BadRequest("Username is required.");
+
+                if (string.IsNullOrEmpty(user.Email))
+                    return BadRequest("Email is required.");
+
+                if (string.IsNullOrEmpty(user.PasswordHash))
+                    return BadRequest("Password is required.");
+
+                if (string.IsNullOrEmpty(user.Role))
+                    return BadRequest("Role is required.");
+
                 var result = await _userService.RegisterUserAsync(user);
+
                 if (!result)
                     return BadRequest("Registration failed. User may already exist.");
 
-                return Ok("User registered successfully.");
+                return Ok(new { message = "User registered successfully." });
             }
             catch (Exception ex)
             {
@@ -37,18 +56,30 @@ namespace AssetManagementSystem.Controllers
             }
         }
 
-        [HttpPost("login")]
         [AllowAnonymous]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] AuthRequest request)
         {
             try
             {
+                if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                    return BadRequest("Email and password are required.");
+
                 var user = await _userService.AuthenticateAsync(request.Email, request.Password);
+
                 if (user == null)
                     return Unauthorized("Invalid email or password.");
 
                 var token = _tokenService.GenerateToken(user);
-                return Ok(new { token });
+
+                return Ok(new
+                {
+                    token = token,
+                    id = user.Id,
+                    username = user.Username,
+                    email = user.Email,
+                    role = user.Role
+                });
             }
             catch (Exception ex)
             {
@@ -56,6 +87,7 @@ namespace AssetManagementSystem.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("me")]
         public IActionResult Me()
         {
@@ -71,9 +103,8 @@ namespace AssetManagementSystem.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet]
-        // [Authorize(Roles = "admin")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetAllUsers()
         {
             try

@@ -10,7 +10,7 @@
         public string Department { get; set; }
         public string DepartmentUnit { get; set; }
         public string AccountName { get; set; }
-        public DateTimeOffset? ContractDate { get; set; } // optional
+        public DateTimeOffset? ContractDate { get; set; }
         public string OfficerInCharge { get; set; }
         public string Signatories { get; set; }
     }

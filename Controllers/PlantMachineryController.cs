@@ -1,115 +1,129 @@
 using Asset_management.models;
+using Asset_management.services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using static Asset_management.models.PlantMachinery;
 
-namespace AssetManagementSystem.Controllers
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class PlantMachineryController : ControllerBase
 {
-    [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class PlantMachineryController : ControllerBase
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public PlantMachineryController(ApplicationDbContext context, IEmailService emailService)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _emailService = emailService;
+    }
 
-        public PlantMachineryController(ApplicationDbContext context)
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] PlantMachineryCreateDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+
+        var entity = new PlantMachinery
         {
-            _context = context;
+            EquipmentName = dto.EquipmentName,
+            SerialNumber = dto.SerialNumber,
+            MakeModel = dto.MakeModel,
+            PurchaseDate = dto.PurchaseDate,
+            Value = dto.Value,
+            Location = dto.Location,
+            OperationalStatus = dto.OperationalStatus,
+            Department = dto.Department,
+            DepartmentUnit = dto.DepartmentUnit,
+            RequestedBy = userEmail,
+            RequestedAt = DateTimeOffset.UtcNow,
+            Status = AssetStatus.Pending
+        };
+
+        _context.PlantMachineries.Add(entity);
+        await _context.SaveChangesAsync();
+
+        await _emailService.NotifyAssetCreatedAsync("PlantMachinery", entity.Id, $"{entity.EquipmentName} - {entity.SerialNumber}", userEmail);
+
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [Authorize(Roles = "admin")]
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPending()
+    {
+        var pending = await _context.PlantMachineries
+            .Where(a => a.Status == AssetStatus.Pending)
+            .ToListAsync();
+
+        return Ok(pending);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery] bool includePending = false)
+    {
+        var isAdmin = User.IsInRole("admin");
+
+        if (isAdmin && includePending)
+            return Ok(await _context.PlantMachineries.ToListAsync());
+
+        var result = await _context.PlantMachineries
+            .Where(a => a.Status != AssetStatus.Pending)
+            .ToListAsync();
+
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var entity = await _context.PlantMachineries.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        if (entity.Status == AssetStatus.Pending && !User.IsInRole("admin"))
+        {
+            var userEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
+            if (!string.Equals(userEmail, entity.RequestedBy, StringComparison.OrdinalIgnoreCase))
+                return Forbid();
         }
 
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Create(PlantMachinery asset)
-        {
-            try
-            {
-                _context.PlantMachineries.Add(asset);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction(nameof(GetById), new { id = asset.Id }, asset);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to create asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        return Ok(entity);
+    }
 
-        [HttpPut("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Update(int id, PlantMachinery asset)
-        {
-            if (id != asset.Id)
-                return BadRequest("ID mismatch.");
+    [Authorize(Roles = "admin")]
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, [FromBody] PlantMachineryApproveDto dto)
+    {
+        var entity = await _context.PlantMachineries.FindAsync(id);
+        if (entity == null) return NotFound();
 
-            _context.Entry(asset).State = EntityState.Modified;
+        var adminEmail = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.PlantMachineries.Any(a => a.Id == id))
-                    return NotFound($"Asset with ID {id} does not exist.");
-                else
-                    return Conflict("A concurrency error occurred. Please try again.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to update asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        entity.ApprovedBy = adminEmail;
+        entity.ApprovalDate = DateTimeOffset.UtcNow;
+        entity.ApprovalRemarks = dto.Remarks;
+        entity.Status = dto.Approve ? AssetStatus.Approved : AssetStatus.Rejected;
 
-        [HttpDelete("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var asset = await _context.PlantMachineries.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
+        await _context.SaveChangesAsync();
 
-                _context.PlantMachineries.Remove(asset);
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Failed to delete asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        await _emailService.NotifyAssetApprovalAsync("PlantMachinery", entity.Id, $"{entity.EquipmentName} - {entity.SerialNumber}", entity.RequestedBy, dto.Approve, dto.Remarks, adminEmail);
 
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var asset = await _context.PlantMachineries.FindAsync(id);
-                if (asset == null)
-                    return NotFound($"Asset with ID {id} not found.");
-                return Ok(asset);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving asset: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+        return NoContent();
+    }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
-        {
-            try
-            {
-                var assets = await _context.PlantMachineries.ToListAsync();
-                return Ok(assets);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error retrieving assets: {ex.InnerException?.Message ?? ex.Message}");
-            }
-        }
+    [Authorize(Roles = "admin")]
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var entity = await _context.PlantMachineries.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.PlantMachineries.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
