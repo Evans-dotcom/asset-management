@@ -66,6 +66,11 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.CustomSchemaIds(type => type.FullName.Replace("+", "."));
 });
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000);
+});
+
 
 builder.Services.AddSwaggerGen(c =>
 {
